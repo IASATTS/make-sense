@@ -136,7 +136,7 @@ export class EditorActions {
                 
                 var text = "x: " + Math.round(mousePositionOverImage.x) + ", y: " + Math.round(mousePositionOverImage.y);
 
-                if (EditorModel.mouseDownPos) {
+                if (EditorModel.mouseDownPos && EditorModel.supportRenderingEngine && EditorModel.supportRenderingEngine.labelType === LabelType.RECT) {
                     const previousMouseDownPositionOverImage: IPoint = PointUtil.subtractAbs(mousePositionOverImage, EditorModel.mouseDownPos);  
                     text = "width: " + Math.round(previousMouseDownPositionOverImage.x) + ", height: " + Math.round(previousMouseDownPositionOverImage.y) 
                         + "</br>" + text;
