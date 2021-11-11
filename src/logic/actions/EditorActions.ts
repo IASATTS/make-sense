@@ -129,8 +129,19 @@ export class EditorActions {
                 const scale: number = imageSize.width / viewPortContentImageRect.width;
                 const mousePositionOverImage: IPoint = PointUtil.multiply(
                     PointUtil.subtract(mousePositionOverViewPortContent, viewPortContentImageRect), scale);
-                const text: string = "x: " + Math.round(mousePositionOverImage.x) + ", y: " + Math.round(mousePositionOverImage.y);
 
+                // MODIFICATION : Show width and height when using mousedown.
+                if (event.type === "mousedown")
+                    EditorModel.mouseDownPos = mousePositionOverImage;
+                
+                var text = "x: " + Math.round(mousePositionOverImage.x) + ", y: " + Math.round(mousePositionOverImage.y);
+
+                if (EditorModel.mouseDownPos) {
+                    const previousMouseDownPositionOverImage: IPoint = PointUtil.subtractAbs(mousePositionOverImage, EditorModel.mouseDownPos);  
+                    text = "width: " + Math.round(previousMouseDownPositionOverImage.x) + ", height: " + Math.round(previousMouseDownPositionOverImage.y) 
+                        + "</br>" + text;
+                }
+                
                 EditorModel.mousePositionIndicator.innerHTML = text;
                 EditorModel.mousePositionIndicator.style.left = (mousePositionOverViewPort.x + 15) + "px";
                 EditorModel.mousePositionIndicator.style.top = (mousePositionOverViewPort.y + 15) + "px";

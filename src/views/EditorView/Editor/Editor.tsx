@@ -98,6 +98,7 @@ class Editor extends React.Component<IProps, IState> {
         window.addEventListener(EventType.MOUSE_UP, this.update);
         EditorModel.canvas.addEventListener(EventType.MOUSE_DOWN, this.update);
         EditorModel.canvas.addEventListener(EventType.MOUSE_WHEEL, this.handleZoom);
+        EditorModel.canvas.addEventListener(EventType.MOUSE_UP, this.mouseUp);
     }
 
     private unmountEventListeners() {
@@ -105,6 +106,7 @@ class Editor extends React.Component<IProps, IState> {
         window.removeEventListener(EventType.MOUSE_UP, this.update);
         EditorModel.canvas.removeEventListener(EventType.MOUSE_DOWN, this.update);
         EditorModel.canvas.removeEventListener(EventType.MOUSE_WHEEL, this.handleZoom);
+        EditorModel.canvas.removeEventListener(EventType.MOUSE_UP, this.mouseUp);
     }
 
     // =================================================================================================================
@@ -149,6 +151,10 @@ class Editor extends React.Component<IProps, IState> {
         ViewPortActions.updateDefaultViewPortImageRect();
         ViewPortActions.resizeViewPortContent();
         EditorActions.fullRender();
+    };
+
+    private mouseUp = (event: MouseEvent) => {
+        EditorModel.mouseDownPos = null;
     };
 
     private update = (event: MouseEvent) => {

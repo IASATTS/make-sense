@@ -25,4 +25,11 @@ export class PointUtil {
             y: p1.y * factor
         }
     }
+
+    public static subtractAbs(p1: IPoint, p2: IPoint): IPoint {
+        return {
+            x: Math.abs(p1.x - p2.x),
+            y: Math.abs(p1.y - p2.y)
+        }
+    }
 }
