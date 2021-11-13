@@ -20,6 +20,8 @@ import {GeneralSelector} from "../../store/selectors/GeneralSelector";
 import {ViewPortHelper} from "../helpers/ViewPortHelper";
 import {CustomCursorStyle} from "../../data/enums/CustomCursorStyle";
 import {LineRenderEngine} from "../render/LineRenderEngine";
+import {LabelsSelector} from '../../store/selectors/LabelsSelector';
+import { Direction } from "../../data/enums/Direction";
 
 export class EditorActions {
 
@@ -129,17 +131,55 @@ export class EditorActions {
                 const scale: number = imageSize.width / viewPortContentImageRect.width;
                 const mousePositionOverImage: IPoint = PointUtil.multiply(
                     PointUtil.subtract(mousePositionOverViewPortContent, viewPortContentImageRect), scale);
+                
+                // MODIFICATION : Show width and height of the current label
+                //    Dynamically update it when dragging the rectangle
 
-                // MODIFICATION : Show width and height when using mousedown.
                 if (event.type === "mousedown")
                     EditorModel.mouseDownPos = mousePositionOverImage;
-                
+
                 var text = "x: " + Math.round(mousePositionOverImage.x) + ", y: " + Math.round(mousePositionOverImage.y);
 
-                if (EditorModel.mouseDownPos && EditorModel.supportRenderingEngine && EditorModel.supportRenderingEngine.labelType === LabelType.RECT) {
-                    const previousMouseDownPositionOverImage: IPoint = PointUtil.subtractAbs(mousePositionOverImage, EditorModel.mouseDownPos);  
-                    text = "width: " + Math.round(previousMouseDownPositionOverImage.x) + ", height: " + Math.round(previousMouseDownPositionOverImage.y) 
+                if (EditorModel.supportRenderingEngine && EditorModel.supportRenderingEngine.labelType === LabelType.RECT) {
+                    var currentWidth = 0;
+                    var currentHeight = 0;
+
+                    var label = LabelsSelector.getActiveRectLabel();
+                    
+                    if (label !== null){
+                        currentWidth = label.rect.width;
+                        currentHeight = label.rect.height;
+                    }
+
+                    var mouseDownPos = EditorModel.mouseDownPos;
+                    
+                    if (mouseDownPos){
+                        var rectEngine = EditorModel.supportRenderingEngine as RectRenderEngine;
+                        var currentAnchor = rectEngine.GetResizeAnchor();
+                        var currentAnchorDir = currentAnchor != null ? currentAnchor.type : null;
+
+                        const previousMouseDownPositionOverImage: IPoint = PointUtil.subtract(mousePositionOverImage, EditorModel.mouseDownPos);  
+
+                        // If we drag from the left, substract the previous mouse down position, otherwise add it.
+                        if(label !== null && (currentAnchorDir && currentAnchorDir == Direction.TOP_LEFT || currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.BOTTOM_LEFT)){
+                            currentWidth -= previousMouseDownPositionOverImage.x;
+                        }else if(label === null || (currentAnchorDir && !(currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.BOTTOM))){
+                            currentWidth += previousMouseDownPositionOverImage.x;
+                        }
+
+                        // If we drag from the top, substract the previous mouse down position, otherwise add it.
+                        if(label !== null && (currentAnchorDir && currentAnchorDir == Direction.TOP_LEFT || currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.TOP_RIGHT)){
+                            currentHeight -= previousMouseDownPositionOverImage.y;
+                        }else if(label === null || (currentAnchorDir && !(currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.RIGHT))){
+                            currentHeight += previousMouseDownPositionOverImage.y;
+                        }
+                    }
+
+                    // Add the width and height to the tooltip.
+                    if (label !== null || EditorModel.mouseDownPos){
+                        text = "width: " + Math.round(Math.abs(currentWidth)) + ", height: " + Math.round(Math.abs(currentHeight)) 
                         + "</br>" + text;
+                    }
                 }
                 
                 EditorModel.mousePositionIndicator.innerHTML = text;

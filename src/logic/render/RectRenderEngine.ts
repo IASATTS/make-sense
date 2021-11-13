@@ -39,6 +39,10 @@ export class RectRenderEngine extends BaseRenderEngine {
         this.labelType = LabelType.RECT;
     }
 
+    public GetResizeAnchor(){
+        return this.startResizeRectAnchor;
+    }
+
     // =================================================================================================================
     // EVENT HANDLERS
     // =================================================================================================================
