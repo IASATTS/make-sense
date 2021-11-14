@@ -15,8 +15,13 @@ export class YOLOUtils {
             throw new LabelNamesNotUniqueError()
         }
 
+        // Use the labels colors in order from the Settings list, instead of doing it randomly, when importing from yolo labels.
+        var x = 0;
         return labelNames
-            .map((name: string) => LabelUtil.createLabelName(name))
+            .map((name: string) => {
+                x++;
+                return LabelUtil.createLabelName(name, x - 1);
+            })
     }
 
     public static loadLabelsList(fileData: File, onSuccess: (labels: LabelName[]) => any, onFailure: () => any) {

@@ -8,11 +8,13 @@ import { sample } from 'lodash';
 import {Settings} from '../settings/Settings';
 
 export class LabelUtil {
-    public static createLabelName(name: string): LabelName {
+    public static createLabelName(name: string, colorIndex: number = null): LabelName {
         return {
             id: uuidv4(),
             name,
-            color: sample(Settings.LABEL_COLORS_PALETTE)
+            color: colorIndex !== null && colorIndex < Settings.LABEL_COLORS_PALETTE.length ? 
+                Settings.LABEL_COLORS_PALETTE[colorIndex] : 
+                sample(Settings.LABEL_COLORS_PALETTE)
         }
     }
 

@@ -39,10 +39,11 @@ export class Settings {
     ];
 
     public static readonly LABEL_COLORS_PALETTE = [
+        '#8438ff',
+        '#ffb21d',
         '#ff3838',
         '#ff9d97',
         '#ff701f',
-        '#ffb21d',
         '#cff231',
         '#48f90a',
         '#92cc17',
@@ -54,7 +55,6 @@ export class Settings {
         '#344593',
         '#6473ff',
         '#0018ec',
-        '#8438ff',
         '#520085',
         '#cb38ff',
         '#ff95c8',
