@@ -11,6 +11,7 @@ import {Direction} from "../../data/enums/Direction";
 import {PlatformUtil} from "../../utils/PlatformUtil";
 import {LabelActions} from "../actions/LabelActions";
 import {LineRenderEngine} from "../render/LineRenderEngine";
+import {ContextManager} from "../context/ContextManager";
 
 export class EditorContext extends BaseContext {
     public static actions: HotKeyAction[] = [
@@ -167,6 +168,15 @@ export class EditorContext extends BaseContext {
                 ImageActions.setActiveLabelOnActiveImage(9);
                 EditorActions.fullRender();
             }
-        }
+        },
+        {
+            keyCombo: ["s"],
+            action: (event: KeyboardEvent) => {
+                if (EditorModel.supportRenderingEngine && EditorModel.supportRenderingEngine.labelType === LabelType.RECT) {
+                    ContextManager.toggleMakeSquare();
+                }
+                EditorActions.fullRender();
+            }
+        },
     ];
 }

@@ -24,6 +24,8 @@ import {EditorActions} from '../actions/EditorActions';
 import {GeneralSelector} from '../../store/selectors/GeneralSelector';
 import {LabelStatus} from '../../data/enums/LabelStatus';
 import {LabelUtil} from '../../utils/LabelUtil';
+import { Direction } from '../../data/enums/Direction';
+import {ContextManager} from "../context/ContextManager";
 
 export class RectRenderEngine extends BaseRenderEngine {
 
@@ -65,8 +67,39 @@ export class RectRenderEngine extends BaseRenderEngine {
                         this.startRectCreation(data.mousePositionOnViewPortContent);
                 }
             } else if (isMouseOverImage) {
+                const activeLabelRect: LabelRect = LabelsSelector.getActiveRectLabel();
 
-                this.startRectCreation(data.mousePositionOnViewPortContent);
+                // If the Control key is pressed while clicking on the active label, it's resized to make a square.
+                    // Otherwise, start creating a new label
+                if (!!activeLabelRect && data.activeKeyCombo.includes("Control")) 
+                {
+                    const rect: IRect = this.calculateRectRelativeToActiveImage(activeLabelRect.rect, data);
+                    const scale: number = RenderEngineUtil.calculateImageScale(data);
+                    const scaledRect: IRect = RectUtil.scaleRect(rect, scale);
+
+                    if(scaledRect.width > scaledRect.height)
+                    {
+                        scaledRect.height = scaledRect.width;
+                    }
+                    else if(scaledRect.height > scaledRect.width)
+                    {
+                        scaledRect.width = scaledRect.height;
+                    }
+
+                    const imageData = LabelsSelector.getActiveImageData();
+                    imageData.labelRects = imageData.labelRects.map((labelRect: LabelRect) => {
+                        if (labelRect.id === activeLabelRect.id) {
+                            return {
+                                ...labelRect,
+                                rect: scaledRect
+                            };
+                        }
+                        return labelRect;
+                    });
+                    store.dispatch(updateImageDataById(imageData.id, imageData));
+                }else{
+                    this.startRectCreation(data.mousePositionOnViewPortContent);
+                }
             }
         }
     };
@@ -84,10 +117,26 @@ export class RectRenderEngine extends BaseRenderEngine {
                 const maxY: number = Math.max(this.startCreateRectPoint.y, mousePositionSnapped.y);
 
                 const rect = {x: minX, y: minY, width: maxX - minX, height: maxY - minY};
-                this.addRectLabel(RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data));
-            }
 
-            if (!!this.startResizeRectAnchor && !!activeLabelRect) {
+                // If shouldMakeSquare = true while creating a new label with the rect tool, a square is made instead of a rectangle.
+                if (this.shouldMakeSquare(data)) {
+                    var currentAnchorDir = this.startResizeRectAnchor != null ? this.startResizeRectAnchor.type : null;
+                    
+                    // Make the smaller sides equals to the bigger ones.
+                    if (rect.width > rect.height){
+                        rect.height = rect.width;
+                    }
+                    else if(rect.height > rect.width)
+                    {
+                        rect.width = rect.height;
+                    } 
+                }
+
+                this.addRectLabel(RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data));
+            } 
+            
+            if (!!this.startResizeRectAnchor && !!activeLabelRect) 
+            {
                 const rect: IRect = this.calculateRectRelativeToActiveImage(activeLabelRect.rect, data);
                 const startAnchorPosition: IPoint = PointUtil.add(this.startResizeRectAnchor.position,
                     data.viewPortContentImageRect);
@@ -95,6 +144,31 @@ export class RectRenderEngine extends BaseRenderEngine {
                 const resizeRect: IRect = RectUtil.resizeRect(rect, this.startResizeRectAnchor.type, delta);
                 const scale: number = RenderEngineUtil.calculateImageScale(data);
                 const scaledRect: IRect = RectUtil.scaleRect(resizeRect, scale);
+
+                // If shouldMakeSquare = true while finishing the resize, a square is made instead of a rectangle.
+                if (this.shouldMakeSquare(data)) {
+                    var currentAnchorDir = this.startResizeRectAnchor != null ? this.startResizeRectAnchor.type : null;
+                    
+                    // If resized directly from the side, always make the perpendicular sides equals to resized sizes
+                    if (currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.BOTTOM){
+                        scaledRect.width = scaledRect.height;
+                    }
+                    else if (currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.RIGHT)
+                    {
+                        scaledRect.height = scaledRect.width;
+                    }
+                    else
+                    {
+                        // If resized from the corners, make the smaller sides equals to the bigger ones.
+                        if (scaledRect.width > scaledRect.height){
+                            scaledRect.height = scaledRect.width;
+                        }
+                        else if(scaledRect.height > scaledRect.width)
+                        {
+                            scaledRect.width = scaledRect.height;
+                        } 
+                    }
+                }
 
                 const imageData = LabelsSelector.getActiveImageData();
                 imageData.labelRects = imageData.labelRects.map((labelRect: LabelRect) => {
@@ -316,5 +390,13 @@ export class RectRenderEngine extends BaseRenderEngine {
         this.startCreateRectPoint = null;
         this.startResizeRectAnchor = null;
         EditorActions.setViewPortActionsDisabledStatus(false);
+    }
+
+    // Transform the rectangle into a square if the makeSquare = true and ctrl key not pressed, or the opposite.
+    private shouldMakeSquare(data: EditorData) {
+        var makeSquare = ContextManager.getMakeSquare();
+        var ctrlKeyPressed = data.activeKeyCombo.includes("Control");
+
+        return makeSquare && !ctrlKeyPressed || !makeSquare && ctrlKeyPressed;
     }
 }

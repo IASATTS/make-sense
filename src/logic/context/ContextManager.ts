@@ -12,6 +12,7 @@ export class ContextManager {
     private static activeCombo: string[] = [];
     private static actions: HotKeyAction[] = [];
     private static contextHistory: ContextType[] = [];
+    private static makeSquare: boolean = false;
 
     public static getActiveCombo(): string[] {
         return ContextManager.activeCombo;
@@ -97,5 +98,13 @@ export class ContextManager {
 
     private static matchCombo(combo1: string[], combo2: string[]): boolean {
         return isEmpty(xor(combo1, combo2))
+    }
+
+    public static getMakeSquare(): boolean {
+        return this.makeSquare;
+    }
+
+    public static toggleMakeSquare() {
+        this.makeSquare = !this.makeSquare;
     }
 }
