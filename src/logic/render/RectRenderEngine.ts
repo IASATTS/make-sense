@@ -118,19 +118,8 @@ export class RectRenderEngine extends BaseRenderEngine {
 
                 const rect = {x: minX, y: minY, width: maxX - minX, height: maxY - minY};
 
-                // If shouldMakeSquare = true while creating a new label with the rect tool, a square is made instead of a rectangle.
-                if (this.shouldMakeSquare(data)) {
-                    var currentAnchorDir = this.startResizeRectAnchor != null ? this.startResizeRectAnchor.type : null;
-                    
-                    // Make the smaller sides equals to the bigger ones.
-                    if (rect.width > rect.height){
-                        rect.height = rect.width;
-                    }
-                    else if(rect.height > rect.width)
-                    {
-                        rect.width = rect.height;
-                    } 
-                }
+                // Transform the created rect into a square if makeSquare = true
+                this.transformIntoSquareCreate(data, rect);
 
                 this.addRectLabel(RenderEngineUtil.transferRectFromImageToViewPortContent(rect, data));
             } 
@@ -145,30 +134,8 @@ export class RectRenderEngine extends BaseRenderEngine {
                 const scale: number = RenderEngineUtil.calculateImageScale(data);
                 const scaledRect: IRect = RectUtil.scaleRect(resizeRect, scale);
 
-                // If shouldMakeSquare = true while finishing the resize, a square is made instead of a rectangle.
-                if (this.shouldMakeSquare(data)) {
-                    var currentAnchorDir = this.startResizeRectAnchor != null ? this.startResizeRectAnchor.type : null;
-                    
-                    // If resized directly from the side, always make the perpendicular sides equals to resized sizes
-                    if (currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.BOTTOM){
-                        scaledRect.width = scaledRect.height;
-                    }
-                    else if (currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.RIGHT)
-                    {
-                        scaledRect.height = scaledRect.width;
-                    }
-                    else
-                    {
-                        // If resized from the corners, make the smaller sides equals to the bigger ones.
-                        if (scaledRect.width > scaledRect.height){
-                            scaledRect.height = scaledRect.width;
-                        }
-                        else if(scaledRect.height > scaledRect.width)
-                        {
-                            scaledRect.width = scaledRect.height;
-                        } 
-                    }
-                }
+                // Transform the resized rect into a square if makeSquare = true
+                this.transformIntoSquareResize(data, scaledRect);
 
                 const imageData = LabelsSelector.getActiveImageData();
                 imageData.labelRects = imageData.labelRects.map((labelRect: LabelRect) => {
@@ -185,6 +152,49 @@ export class RectRenderEngine extends BaseRenderEngine {
         }
         this.endRectTransformation()
     };
+
+    private transformIntoSquareCreate(data: EditorData, rect: IRect){
+        // If shouldMakeSquare = true while creating a new label with the rect tool, a square is made instead of a rectangle.
+        if (this.shouldMakeSquare(data)) {
+            var currentAnchorDir = this.startResizeRectAnchor != null ? this.startResizeRectAnchor.type : null;
+            
+            // Make the smaller sides equals to the bigger ones.
+            if (rect.width > rect.height){
+                rect.height = rect.width;
+            }
+            else if(rect.height > rect.width)
+            {
+                rect.width = rect.height;
+            } 
+        }
+    }
+
+    private transformIntoSquareResize(data: EditorData, rect: IRect){
+        // If shouldMakeSquare = true while finishing the resize, a square is made instead of a rectangle.
+        if (this.shouldMakeSquare(data)) {
+            var currentAnchorDir = this.startResizeRectAnchor != null ? this.startResizeRectAnchor.type : null;
+            
+            // If resized directly from the side, always make the perpendicular sides equals to resized sizes
+            if (currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.BOTTOM){
+                rect.width = rect.height;
+            }
+            else if (currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.RIGHT)
+            {
+                rect.height = rect.width;
+            }
+            else
+            {
+                // If resized from the corners, make the smaller sides equals to the bigger ones.
+                if (rect.width > rect.height){
+                    rect.height = rect.width;
+                }
+                else if(rect.height > rect.width)
+                {
+                    rect.width = rect.height;
+                } 
+            }
+        }
+    }
 
     public mouseMoveHandler = (data: EditorData) => {
         if (!!data.viewPortContentImageRect && !!data.mousePositionOnViewPortContent) {
@@ -219,12 +229,12 @@ export class RectRenderEngine extends BaseRenderEngine {
                     this.drawInactiveRect(labelRect, data);
                 }
             });
-            this.drawCurrentlyCreatedRect(data.mousePositionOnViewPortContent, data.viewPortContentImageRect);
+            this.drawCurrentlyCreatedRect(data.mousePositionOnViewPortContent, data.viewPortContentImageRect, data);
             this.updateCursorStyle(data);
         }
     }
 
-    private drawCurrentlyCreatedRect(mousePosition: IPoint, imageRect: IRect) {
+    private drawCurrentlyCreatedRect(mousePosition: IPoint, imageRect: IRect, data: EditorData) {
         if (!!this.startCreateRectPoint) {
             const mousePositionSnapped: IPoint = RectUtil.snapPointToRect(mousePosition, imageRect);
             const activeRect: IRect = {
@@ -233,6 +243,10 @@ export class RectRenderEngine extends BaseRenderEngine {
                 width: mousePositionSnapped.x - this.startCreateRectPoint.x,
                 height: mousePositionSnapped.y - this.startCreateRectPoint.y
             };
+
+            // Transform the created rect into a square if makeSquare = true
+            this.transformIntoSquareCreate(data, activeRect);
+
             const activeRectBetweenPixels = RenderEngineUtil.setRectBetweenPixels(activeRect);
             const lineColor: string = BaseRenderEngine.resolveLabelLineColor(null, true)
             DrawUtil.drawRect(this.canvas, activeRectBetweenPixels, lineColor, RenderEngineSettings.LINE_THICKNESS);
@@ -255,6 +269,9 @@ export class RectRenderEngine extends BaseRenderEngine {
             const endAnchorPositionSnapped: IPoint = RectUtil.snapPointToRect(data.mousePositionOnViewPortContent, data.viewPortContentImageRect);
             const delta = PointUtil.subtract(endAnchorPositionSnapped, startAnchorPosition);
             rect = RectUtil.resizeRect(rect, this.startResizeRectAnchor.type, delta);
+
+            // Transform the resized rect into a square if makeSquare = true
+            this.transformIntoSquareResize(data, rect);
         }
         const rectOnImage: IRect = RectUtil.translate(rect, data.viewPortContentImageRect);
         const lineColor: string = BaseRenderEngine.resolveLabelLineColor(labelRect.labelId, true)
