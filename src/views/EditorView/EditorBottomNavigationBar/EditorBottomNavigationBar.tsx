@@ -44,7 +44,7 @@ const EditorBottomNavigationBar: React.FC<IProps> = ({size, imageData, totalImag
                 externalClassName={"left"}
             />
             {size.width > minWidth ?
-                <div className="CurrentImageName"> {imageData.fileData.name} </div> :
+                <div className="CurrentImageName" onClick={() => ImageActions.copyFileNameToClipboard(imageData.fileData.name)}> {imageData.fileData.name} </div> :
                 <div className="CurrentImageCount"> {getImageCounter()} </div>
             }
             <ImageButton

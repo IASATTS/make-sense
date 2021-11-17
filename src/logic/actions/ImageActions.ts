@@ -149,4 +149,8 @@ export class ImageActions {
 
     return newImageData;
   }
+
+  public static copyFileNameToClipboard(fileName: string): void {
+    navigator.clipboard.writeText(fileName)
+  }
 }
