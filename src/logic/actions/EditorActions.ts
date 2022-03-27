@@ -146,7 +146,7 @@ export class EditorActions {
 
                     var label = LabelsSelector.getActiveRectLabel();
                     
-                    if (label !== null){
+                    if (label != null){
                         currentWidth = label.rect.width;
                         currentHeight = label.rect.height;
                     }
@@ -161,14 +161,14 @@ export class EditorActions {
                         const previousMouseDownPositionOverImage: IPoint = PointUtil.subtract(mousePositionOverImage, EditorModel.mouseDownPos);  
 
                         // If we drag from the left, substract the previous mouse down position, otherwise add it.
-                        if(label !== null && (currentAnchorDir && currentAnchorDir == Direction.TOP_LEFT || currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.BOTTOM_LEFT)){
+                        if(label != null && (currentAnchorDir && currentAnchorDir == Direction.TOP_LEFT || currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.BOTTOM_LEFT)){
                             currentWidth -= previousMouseDownPositionOverImage.x;
                         }else if(label === null || (currentAnchorDir && !(currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.BOTTOM))){
                             currentWidth += previousMouseDownPositionOverImage.x;
                         }
 
                         // If we drag from the top, substract the previous mouse down position, otherwise add it.
-                        if(label !== null && (currentAnchorDir && currentAnchorDir == Direction.TOP_LEFT || currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.TOP_RIGHT)){
+                        if(label != null && (currentAnchorDir && currentAnchorDir == Direction.TOP_LEFT || currentAnchorDir == Direction.TOP || currentAnchorDir == Direction.TOP_RIGHT)){
                             currentHeight -= previousMouseDownPositionOverImage.y;
                         }else if(label === null || (currentAnchorDir && !(currentAnchorDir == Direction.LEFT || currentAnchorDir == Direction.RIGHT))){
                             currentHeight += previousMouseDownPositionOverImage.y;
@@ -176,7 +176,7 @@ export class EditorActions {
                     }
 
                     // Add the width and height to the tooltip.
-                    if (label !== null || EditorModel.mouseDownPos){
+                    if (label != null || EditorModel.mouseDownPos){
                         text = "width: " + Math.round(Math.abs(currentWidth)) + ", height: " + Math.round(Math.abs(currentHeight)) 
                         + "</br>" + text;
                     }
